@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 import re
 from datetime import datetime, timedelta
 from typing import Optional
@@ -20,7 +22,6 @@ from telegram.ext import (
 # ─── Config ───────────────────────────────────────────────────────────────────
 BOT_TOKEN = "8640707951:AAHyb2SrDidDjWG6snpOoFpgTS2LjpuAqQA"
 SHEET_ID = "1qOdQFgHZMT2IAzbnopbvrOnwVrjXCQgXJech_XnUg1k"
-SERVICE_ACCOUNT_FILE = "service_account.json"
 DEADLINE_MINUTES = 10          # بازی‌هایی که کمتر از این دقیقه به شروعشون مونده قبول نمی‌کنه
 DATA_START_ROW = 3             # ردیف اول بازی‌ها (1-indexed)
 NAME_ROW = 2                   # ردیف اسامی بازیکنان (header دوم)
@@ -37,8 +38,16 @@ logger = logging.getLogger(__name__)
 
 # ─── Google Sheets helpers ────────────────────────────────────────────────────
 def get_sheet():
-    creds = Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if creds_json:
+        creds_info = json.loads(creds_json)
+    else:
+        # fallback به فایل محلی
+        with open("service_account.json") as f:
+            creds_info = json.load(f)
+
+    creds = Credentials.from_service_account_info(
+        creds_info,
         scopes=[
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive",
